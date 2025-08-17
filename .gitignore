@@ -1,0 +1,19 @@
+# 忽略构建文件夹
+build/
+bin/
+
+# 忽略临时文件
+*.log
+*.tmp
+
+# 忽略编辑器文件
+.vscode/
+
+# 忽略objects文件
+/Objects/
+
+# 忽略Listings文件
+/Listings/
+
+# 忽略DebugConfig文件
+/DebugConfig/
