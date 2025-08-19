@@ -1,14 +1,22 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-19 20:28:49
+ * @LastEditTime: 2025-08-20 00:01:43
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
  * @Description:
  */
 #include "stm32f10x.h" // Device header
 #include "LCD.h"
 #include "Delay.h"
+void LCD_WR_REG(uint16_t regval)
+{
+    LCD->LCD_REG = regval; // 写寄存器
+}
 
+void LCD_WR_DATA(uint16_t data)
+{
+    LCD->LCD_RAM = data; // 写数据
+}
 void LCD_Init(void)
 {
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_FSMC, ENABLE);
@@ -71,16 +79,126 @@ void LCD_Init(void)
     FSMC_NORSRAMInit(&FSMC_NORSRAMInitStructure); // 初始化FSMC配置
 
     FSMC_NORSRAMCmd(FSMC_Bank1_NORSRAM4, ENABLE); // 使能BANK1
-}
-void LCD_WR_REG(uint16_t regval)
-{
-    LCD->LCD_REG = regval; // 写寄存器
+
+    // 退出睡眠
+    LCD_WR_REG(0x11);
+    Delay_ms(120);
+
+    // 命令解锁
+    LCD_WR_REG(0xF0);
+    LCD_WR_DATA(0xC3);
+    LCD_WR_REG(0xF0);
+    LCD_WR_DATA(0x96);
+
+    // 内存访问控制
+    LCD_WR_REG(0x36);
+    LCD_WR_DATA(0x48); // 屏幕方向，RGB顺序
+
+    // 像素格式
+    LCD_WR_REG(0x3A);
+    LCD_WR_DATA(0x55); // 16bit/pixel
+
+    // 显示反转设置
+    LCD_WR_REG(0xB4);
+    LCD_WR_DATA(0x01); // 1-dot inversion
+
+    // 门驱动时序控制
+    LCD_WR_REG(0xB7);
+    LCD_WR_DATA(0xC6);
+
+    // 电源设置
+    LCD_WR_REG(0xC0);
+    LCD_WR_DATA(0x80);
+    LCD_WR_DATA(0x64); // VGH=15V, VGL=-10V
+
+    LCD_WR_REG(0xC1);
+    LCD_WR_DATA(0x13); // Vop=4.5V
+
+    LCD_WR_REG(0xC2);
+    LCD_WR_DATA(0xA7);
+
+    LCD_WR_REG(0xC5);
+    LCD_WR_DATA(0x08);
+
+    // 电压设置
+    LCD_WR_REG(0xE8);
+    LCD_WR_DATA(0x40);
+    LCD_WR_DATA(0x8A);
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x29);
+    LCD_WR_DATA(0x19);
+    LCD_WR_DATA(0xA5);
+    LCD_WR_DATA(0x33);
+
+    // 正极性Gamma
+    LCD_WR_REG(0xE0);
+    LCD_WR_DATA(0xF0);
+    LCD_WR_DATA(0x06);
+    LCD_WR_DATA(0x0B);
+    LCD_WR_DATA(0x07);
+    LCD_WR_DATA(0x06);
+    LCD_WR_DATA(0x05);
+    LCD_WR_DATA(0x2E);
+    LCD_WR_DATA(0x33);
+    LCD_WR_DATA(0x47);
+    LCD_WR_DATA(0x3A);
+    LCD_WR_DATA(0x17);
+    LCD_WR_DATA(0x16);
+    LCD_WR_DATA(0x2E);
+    LCD_WR_DATA(0x31);
+
+    // 负极性Gamma
+    LCD_WR_REG(0xE1);
+    LCD_WR_DATA(0xF0);
+    LCD_WR_DATA(0x09);
+    LCD_WR_DATA(0x0D);
+    LCD_WR_DATA(0x09);
+    LCD_WR_DATA(0x08);
+    LCD_WR_DATA(0x23);
+    LCD_WR_DATA(0x2E);
+    LCD_WR_DATA(0x33);
+    LCD_WR_DATA(0x46);
+    LCD_WR_DATA(0x38);
+    LCD_WR_DATA(0x13);
+    LCD_WR_DATA(0x13);
+    LCD_WR_DATA(0x2C);
+    LCD_WR_DATA(0x32);
+
+    // 命令锁回去
+    LCD_WR_REG(0xF0);
+    LCD_WR_DATA(0x3C);
+    LCD_WR_REG(0xF0);
+    LCD_WR_DATA(0x69);
+
+    // TE 信号
+    LCD_WR_REG(0x35);
+    LCD_WR_DATA(0x00);
+
+    // 显示反色（可选，不要就注释掉）
+    LCD_WR_REG(0x21);
+
+    // 设置窗口大小 320x480
+    LCD_WR_REG(0x2A); // column addr set
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x01);
+    LCD_WR_DATA(0x3F); // 319
+
+    LCD_WR_REG(0x2B); // row addr set
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x00);
+    LCD_WR_DATA(0x01);
+    LCD_WR_DATA(0xDF); // 479
+
+    // 开显示
+    LCD_WR_REG(0x29);
+    Delay_ms(50);
+
+    // 写内存使能
+    LCD_WR_REG(0x2C);
 }
 
-void LCD_WR_DATA(uint16_t data)
-{
-    LCD->LCD_RAM = data; // 写数据
-}
 
 uint16_t LCD_RD_DATA(void)
 {
