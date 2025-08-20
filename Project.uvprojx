@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Start;.\Library;.\User;.\Hardware;.\System</IncludePath>
+              <IncludePath>.\Start;.\Library;.\User;.\Hardware;.\System;.\Fonts</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -709,6 +709,16 @@
               <FileName>Delay.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\System\Delay.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Fonts</GroupName>
+          <Files>
+            <File>
+              <FileName>ASCII_Font.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Fonts\ASCII_Font.h</FilePath>
             </File>
           </Files>
         </Group>

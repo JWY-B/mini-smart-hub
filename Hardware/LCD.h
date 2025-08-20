@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:09:07
- * @LastEditTime: 2025-08-19 19:39:43
+ * @LastEditTime: 2025-08-21 00:02:57
  * @FilePath: \mini-smart-hub\Hardware\LCD.h
  * @Description:
  */
@@ -31,7 +31,19 @@ typedef struct
 } _lcd_dev;
 extern _lcd_dev lcddev; // LCD设备结构体
 
-uint16_t LCD_ReadReg(uint16_t LCD_Reg);
-void LCD_Init(void);
+extern uint16_t POINT_COLOR; // 默认黑色
+extern uint16_t BACK_COLOR;  // 默认白色
+
+void LCD_WR_REG(uint16_t regval);
+void LCD_WR_DATA(uint16_t data);
 uint16_t LCD_RD_DATA(void);
+void LCD_WriteReg(uint16_t LCD_Reg, uint16_t LCD_RegValue);
+uint16_t LCD_ReadReg(uint16_t LCD_Reg);
+void LCD_WriteRAM_Prepare(void);
+void LCD_WriteRAM(uint16_t RGB_Code);
+void LCD_Init(void);
+void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos);
+void LCD_DrawPoint(uint16_t x, uint16_t y, uint16_t color);
+uint16_t LCD_ReadPoint(uint16_t x, uint16_t y);
+void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8_t mode);
 #endif

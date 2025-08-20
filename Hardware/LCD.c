@@ -1,22 +1,90 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-20 00:01:43
+ * @LastEditTime: 2025-08-21 00:07:00
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
  * @Description:
  */
 #include "stm32f10x.h" // Device header
 #include "LCD.h"
 #include "Delay.h"
+#include "ASCII_Font.h"
+/**
+ * @description: 写st7796命令寄存器
+ * @param {uint16_t} regval:命令值
+ * @return {无}
+ */
 void LCD_WR_REG(uint16_t regval)
 {
-    LCD->LCD_REG = regval; // 写寄存器
+    LCD->LCD_REG = regval; // FSMC 写命令寄存器
 }
 
+/**
+ * @description: 写st7796数据寄存器
+ * @param {uint16_t} data:数据值
+ * @return {无}
+ */
 void LCD_WR_DATA(uint16_t data)
 {
-    LCD->LCD_RAM = data; // 写数据
+    LCD->LCD_RAM = data; // FSMC 写数据寄存器
 }
+/**
+ * @description: 读st7796数据寄存器
+ * @return {data:数据寄存器值}
+ */
+uint16_t LCD_RD_DATA(void)
+{
+    volatile uint16_t data;
+    data = LCD->LCD_RAM; // FSMC读数据寄存器
+    return data;
+}
+
+/**
+ * @description:写一个命令+写一个数据
+ * @param {uint16_t} LCD_Reg:命令值
+ * @param {uint16_t} LCD_RegValue:数据值
+ * @return {无}
+ */
+void LCD_WriteReg(uint16_t LCD_Reg, uint16_t LCD_RegValue)
+{
+    LCD->LCD_REG = LCD_Reg;      // 写寄存器
+    LCD->LCD_RAM = LCD_RegValue; // 写数据
+}
+
+/**
+ * @description: 读寄存器
+ * @param {uint16_t} LCD_Reg:命令值
+ * @return {数据寄存器值}
+ */
+uint16_t LCD_ReadReg(uint16_t LCD_Reg)
+{
+    LCD_WR_REG(LCD_Reg); // 写寄存器
+    Delay_us(5);
+    return LCD_RD_DATA(); // 读数据
+}
+
+/**
+ * @description: 设置LCD进入GRAM写模式
+ * @return {无}
+ */
+void LCD_WriteRAM_Prepare(void)
+{
+    LCD->LCD_REG = lcddev.wramcmd;
+}
+
+/**
+ * @description: 写像素点颜色
+ * @param {uint16_t} RGB_Code
+ * @return {无}
+ */
+void LCD_WriteRAM(uint16_t RGB_Code)
+{
+    LCD->LCD_RAM = RGB_Code; // 写GRAM
+}
+/**
+ * @description:LCD初始化
+ * @return {无}
+ */
 void LCD_Init(void)
 {
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_FSMC, ENABLE);
@@ -44,8 +112,8 @@ void LCD_Init(void)
 
     FSMC_NORSRAMInitTypeDef FSMC_NORSRAMInitStructure;
     FSMC_NORSRAMTimingInitTypeDef ReadWriteTimingStruct, WriteTimingStruct;
-    ReadWriteTimingStruct.FSMC_AddressSetupTime = 26;
-    ReadWriteTimingStruct.FSMC_AddressHoldTime = 7;
+    ReadWriteTimingStruct.FSMC_AddressSetupTime = 1;
+    ReadWriteTimingStruct.FSMC_AddressHoldTime = 1;
     ReadWriteTimingStruct.FSMC_DataSetupTime = 32;
     ReadWriteTimingStruct.FSMC_BusTurnAroundDuration = 1;
     ReadWriteTimingStruct.FSMC_CLKDivision = 0;
@@ -197,35 +265,130 @@ void LCD_Init(void)
 
     // 写内存使能
     LCD_WR_REG(0x2C);
+
+    // 读取ID
+    LCD_WR_REG(0xD3);
+    lcddev.id = LCD_RD_DATA(); // dummy read
+    lcddev.id = LCD_RD_DATA(); // 读到0X00
+    lcddev.id = LCD_RD_DATA(); // 读取77
+    lcddev.id <<= 8;
+    lcddev.id |= LCD_RD_DATA(); // 读取96
+    printf("%x\r\n", lcddev.id);
 }
 
-
-uint16_t LCD_RD_DATA(void)
+/**
+ * @description: 设置LCD光标位置
+ * @param {uint16_t} Xpos:X坐标
+ * @param {uint16_t} Ypos:Y坐标
+ * @return {无}
+ */
+void LCD_SetCursor(uint16_t Xpos, uint16_t Ypos)
 {
-    volatile uint16_t data;
-    data = LCD->LCD_RAM; // 读数据
+    if (lcddev.dir == 1) // 横屏
+    {
+        uint16_t t = Xpos;
+        Xpos = Ypos;
+        Ypos = lcddev.width - 1 - t;
+    }
+    LCD_WR_REG(lcddev.setxcmd);
+    LCD_WR_DATA(Xpos >> 8);
+    LCD_WR_DATA(Xpos & 0XFF);
+    LCD_WR_REG(lcddev.setycmd);
+    LCD_WR_DATA(Ypos >> 8);
+    LCD_WR_DATA(Ypos & 0XFF);
+}
+
+/**
+ * @description: 画点
+ * @param {uint16_t} x:X坐标
+ * @param {uint16_t} y:Y坐标
+ * @param {uint16_t} color:颜色值
+ * @return {无}
+ */
+void LCD_DrawPoint(uint16_t Xpos, uint16_t Ypos, uint16_t color)
+{
+    LCD_SetCursor(Xpos, Ypos); // 设置光标位置
+    LCD_WriteRAM_Prepare();
+    LCD->LCD_RAM = color; // 写入颜色
+}
+
+/**
+ * @description: 读取点颜色
+ * @param {uint16_t} Xpos:X坐标
+ * @param {uint16_t} Ypos:Y坐标
+ * @return {超过坐标范围返回0, 否则返回颜色值}
+ */
+uint16_t LCD_ReadPoint(uint16_t Xpos, uint16_t Ypos)
+{
+    if (Xpos >= lcddev.width || Ypos >= lcddev.height)
+    {
+        printf("坐标超过范围\r\n");
+        return 0;
+    }
+    uint16_t data;
+    LCD_SetCursor(Xpos, Ypos); // 设置光标位置
+    LCD_WR_REG(0x2E);
+    LCD->LCD_RAM;
+    data = LCD->LCD_RAM;
     return data;
 }
 
-void LCD_WriteReg(uint16_t LCD_Reg, uint16_t LCD_RegValue)
+uint16_t POINT_COLOR = 0x0000; // 默认黑色
+uint16_t BACK_COLOR = 0xFFFF;  // 默认白色
+/**
+ * @description: 指定x,y坐标显示ASCII字符
+ * @param {uint16_t} Xpos:X坐标
+ * @param {uint16_t} Ypos:Y坐标
+ * @param {uint8_t} num:ASCII码
+ * @param {uint8_t} size:字体大小(12/16/24)
+ * @param {uint8_t} mode:显示模式 (0,1) 1:叠加模式 0:不叠加模式
+ * @return {无}
+ */
+void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8_t mode)
 {
-    LCD->LCD_REG = LCD_Reg;      // 写寄存器
-    LCD->LCD_RAM = LCD_RegValue; // 写数据
-}
+    uint8_t temp, t1, t;
+    uint16_t y0 = Ypos;
+    uint8_t csize = (size / 8 + ((size % 8) ? 1 : 0)) * (size / 2); // 一个字符所占的字节数
+    num = num - ' ';                                                // 偏移
+    for (t = 0; t < csize; t++)
+    {
+        if (size == 12)
+        {
+            temp = asc2_1206[num][t]; // 8*12
+        }
+        else if (size == 16)
+        {
+            temp = asc2_1608[num][t]; // 8*16
+        }
+        else if (size == 24)
+        {
+            temp = asc2_2412[num][t]; // 12*24
+        }
+        for (t1 = 0; t1 < 8; t1++)
+        {
 
-uint16_t LCD_ReadReg(uint16_t LCD_Reg)
-{
-    LCD_WR_REG(LCD_Reg); // 写寄存器
-    Delay_us(5);
-    return LCD_RD_DATA(); // 读数据
-}
-
-void LCD_WriteRAM_Prepare(void)
-{
-    LCD->LCD_REG = lcddev.wramcmd;
-}
-
-uint16_t LCD_WriteRAM(uint16_t RGB_Code)
-{
-    LCD->LCD_RAM = RGB_Code; // 写GRAM
+            if (temp & 0x80)
+            {
+                LCD_DrawPoint(Xpos, Ypos, POINT_COLOR);
+            }
+            else if (mode == 0)
+                LCD_DrawPoint(Xpos, Ypos, BACK_COLOR);
+            temp <<= 1;
+            Ypos++;
+            if (Ypos >= lcddev.height)
+            {
+                return;
+            }
+            if (Ypos - y0 == size)
+            {
+                Ypos = y0;
+                Xpos++;
+                if (Xpos >= lcddev.width)
+                {
+                    return;
+                }
+                break;
+            }
+        }
+    }
 }
