@@ -695,6 +695,16 @@
               <FileType>5</FileType>
               <FilePath>.\Hardware\Serial.h</FilePath>
             </File>
+            <File>
+              <FileName>XPT2046.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\HardWare\XPT2046.c</FilePath>
+            </File>
+            <File>
+              <FileName>XPT2046.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\XPT2046.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

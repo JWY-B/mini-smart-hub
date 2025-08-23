@@ -1,9 +1,9 @@
 /*
  * @AuthorD: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-23 13:11:39
+ * @LastEditTime: 2025-08-23 23:35:33
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
- * @Description:
+ * @Description:st7796驱动
  */
 #include "stm32f10x.h" // Device header
 #include "LCD.h"
@@ -59,7 +59,7 @@ void LCD_WriteReg(uint16_t LCD_Reg, uint16_t LCD_RegValue)
 uint16_t LCD_ReadReg(uint16_t LCD_Reg)
 {
     LCD_WR_REG(LCD_Reg); // 写寄存器
-    Delay_us(5);
+    delay_us(5);
     return LCD_RD_DATA(); // 读数据
 }
 
@@ -150,7 +150,7 @@ void LCD_Init(void)
 
     // 退出睡眠
     LCD_WR_REG(0x11);
-    Delay_ms(120);
+    delay_ms(120);
 
     // 命令解锁
     LCD_WR_REG(0xF0);
@@ -261,7 +261,7 @@ void LCD_Init(void)
 
     // 开显示
     LCD_WR_REG(0x29);
-    Delay_ms(50);
+    delay_ms(50);
 
     // 写内存使能
     LCD_WR_REG(0x2C);

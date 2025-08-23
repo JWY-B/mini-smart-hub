@@ -1,9 +1,9 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:09:07
- * @LastEditTime: 2025-08-23 13:12:34
+ * @LastEditTime: 2025-08-24 00:12:07
  * @FilePath: \mini-smart-hub\Hardware\LCD.h
- * @Description:
+ * @Description: st7796驱动
  */
 #ifndef __LCD_H
 #define __LCD_H
