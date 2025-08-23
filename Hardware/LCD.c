@@ -1,7 +1,7 @@
 /*
- * @Author: jwy 2660243285@qq.com
+ * @AuthorD: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-21 00:07:00
+ * @LastEditTime: 2025-08-23 13:11:39
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
  * @Description:
  */
@@ -333,18 +333,18 @@ uint16_t LCD_ReadPoint(uint16_t Xpos, uint16_t Ypos)
     return data;
 }
 
-uint16_t POINT_COLOR = 0x0000; // 默认黑色
-uint16_t BACK_COLOR = 0xFFFF;  // 默认白色
 /**
- * @description: 指定x,y坐标显示ASCII字符
+ * @description: 指定x,y坐标,颜色和背景颜色显示ASCII字符
  * @param {uint16_t} Xpos:X坐标
  * @param {uint16_t} Ypos:Y坐标
  * @param {uint8_t} num:ASCII码
  * @param {uint8_t} size:字体大小(12/16/24)
  * @param {uint8_t} mode:显示模式 (0,1) 1:叠加模式 0:不叠加模式
+ * @param {uint16_t} POINT_COLOR:前景色
+ * @param {uint16_t} BACK_COLOR:背景色
  * @return {无}
  */
-void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8_t mode)
+void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8_t mode, uint16_t point_color, uint16_t back_color)
 {
     uint8_t temp, t1, t;
     uint16_t y0 = Ypos;
@@ -369,10 +369,10 @@ void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8
 
             if (temp & 0x80)
             {
-                LCD_DrawPoint(Xpos, Ypos, POINT_COLOR);
+                LCD_DrawPoint(Xpos, Ypos, point_color);
             }
             else if (mode == 0)
-                LCD_DrawPoint(Xpos, Ypos, BACK_COLOR);
+                LCD_DrawPoint(Xpos, Ypos, back_color);
             temp <<= 1;
             Ypos++;
             if (Ypos >= lcddev.height)
@@ -389,6 +389,170 @@ void LCD_ShowChar(uint16_t Xpos, uint16_t Ypos, uint8_t num, uint8_t size, uint8
                 }
                 break;
             }
+        }
+    }
+}
+
+/**
+ * @description: 显示字符串
+ * @param {uint16_t} Xpos:X坐标
+ * @param {uint16_t} Ypos:Y坐标
+ * @param {const char *} p:字符串
+ * @param {uint8_t} size:字体大小(12/16/24)
+ * @param {uint8_t} mode:显示模式 (0,1) 1:叠加模式 0:不叠加模式
+ * @param {uint16_t} POINT_COLOR:前景色
+ * @param {uint16_t} BACK_COLOR:背景色
+ * @return {无}
+ */
+void LCD_ShowString(uint16_t x, uint16_t y,
+                    const char *p, uint8_t size, uint8_t mode,
+                    uint16_t point_color, uint16_t back_color)
+{
+    while (*p != '\0') // 遍历字符串直到 '\0'
+    {
+        if (x > lcddev.width - size / 2) // 换行
+        {
+            x = 0;
+            y += size;
+        }
+        if (y > lcddev.height - size) // 超出屏幕
+        {
+            break;
+        }
+        LCD_ShowChar(x, y, *p, size, mode, point_color, back_color);
+        x += size / 2; // 每个字符占宽度
+        p++;
+    }
+}
+/**
+ * @description: 设置显示窗口
+ * @param {uint16_t} xs: 起始X坐标
+ * @param {uint16_t} ys: 起始Y坐标
+ * @param {uint16_t} xe: 结束X坐标
+ * @param {uint16_t} ye: 结束Y坐标
+ * @return {无}
+ */
+void LCD_SetWindow(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
+{
+    // 列地址 (X)
+    LCD_WR_REG(0x2A);
+    LCD_WR_DATA(x0 >> 8);
+    LCD_WR_DATA(x0 & 0xFF);
+    LCD_WR_DATA(x1 >> 8);
+    LCD_WR_DATA(x1 & 0xFF);
+
+    // 行地址 (Y)
+    LCD_WR_REG(0x2B);
+    LCD_WR_DATA(y0 >> 8);
+    LCD_WR_DATA(y0 & 0xFF);
+    LCD_WR_DATA(y1 >> 8);
+    LCD_WR_DATA(y1 & 0xFF);
+
+    LCD_WR_REG(0x2C); // 开始写GRAM
+}
+/**
+ * @description: 填充指定区域颜色
+ * @param {uint16_t} xs: 起始X坐标
+ * @param {uint16_t} ys: 起始Y坐标
+ * @param {uint16_t} xe: 结束X坐标
+ * @param {uint16_t} ye: 结束Y坐标
+ * @param {uint16_t} color: 填充颜色
+ * @return {无}
+ */
+void LCD_Fill(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color)
+{
+    uint32_t total = (x1 - x0 + 1) * (y1 - y0 + 1);
+    uint32_t i;
+
+    LCD_SetWindow(x0, y0, x1, y1);
+
+    for (i = 0; i < total; i++)
+    {
+        LCD->LCD_RAM = color; // 直接往GRAM写数据（FSMC映射）
+    }
+}
+/**
+ * @description: 清屏
+ * @param {uint16_t} color: 背景色
+ * @return {无}
+ */
+void LCD_Clear(uint16_t color)
+{
+    LCD_Fill(0, 0, lcddev.width - 1, lcddev.height - 1, color);
+}
+
+/**
+ * @description: 画线
+ * @param {uint16_t} x0: 起始X坐标
+ * @param {uint16_t} y0: 起始Y坐标
+ * @param {uint16_t} x1: 结束X坐标
+ * @param {uint16_t} y1: 结束Y坐标
+ * @param {uint16_t} color: 线条颜色
+ * @return {无}
+ */
+void LCD_DrawLine(uint16_t x0, uint16_t y0,
+                  uint16_t x1, uint16_t y1,
+                  uint16_t color)
+{
+    // 1. 越界检查，防止写到无效显存
+    if (x0 >= lcddev.width)
+        x0 = lcddev.width - 1;
+    if (y0 >= lcddev.height)
+        y0 = lcddev.height - 1;
+    if (x1 >= lcddev.width)
+        x1 = lcddev.width - 1;
+    if (y1 >= lcddev.height)
+        y1 = lcddev.height - 1;
+
+    // 2. 快速路径：水平线
+    if (y0 == y1)
+    {
+        if (x0 > x1)
+        {
+            uint16_t t = x0;
+            x0 = x1;
+            x1 = t;
+        }
+        LCD_Fill(x0, y0, x1, y0, color);
+        return;
+    }
+
+    // 3. 快速路径：竖直线
+    if (x0 == x1)
+    {
+        if (y0 > y1)
+        {
+            uint16_t t = y0;
+            y0 = y1;
+            y1 = t;
+        }
+        LCD_Fill(x0, y0, x0, y1, color);
+        return;
+    }
+
+    // 4. 通用情况：Bresenham 算法
+    int dx = abs(x1 - x0);
+    int dy = -abs(y1 - y0);
+    int sx = (x0 < x1) ? 1 : -1;
+    int sy = (y0 < y1) ? 1 : -1;
+    int err = dx + dy, e2;
+
+    while (1)
+    {
+        LCD_DrawPoint(x0, y0, color);
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        e2 = 2 * err;
+        if (e2 >= dy)
+        {
+            err += dy;
+            x0 += sx;
+        }
+        if (e2 <= dx)
+        {
+            err += dx;
+            y0 += sy;
         }
     }
 }
