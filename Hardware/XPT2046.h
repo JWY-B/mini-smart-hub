@@ -50,5 +50,5 @@ uint16_t XPT2046_ReadADC(uint8_t cmd);
 void XPT2046_GetRawXY(uint16_t *x, uint16_t *y);
 uint8_t XPT2046_GetAverageXY(uint16_t *x, uint16_t *y);
 uint8_t XPT2046_Scan(uint16_t *x, uint16_t *y);
-
+uint8_t XPT2046_IsPressed(void);
 #endif

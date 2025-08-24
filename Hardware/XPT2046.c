@@ -122,7 +122,7 @@ uint8_t XPT2046_GetAverageXY(uint16_t *x, uint16_t *y)
     {
         xbuf[i] = XPT2046_ReadADC(CMD_X);
         ybuf[i] = XPT2046_ReadADC(CMD_Y);
-        delay_us(150);
+        //delay_us(150);
     }
 
     // 排序 -> 取中间的 5 个平均
@@ -174,6 +174,15 @@ uint8_t XPT2046_Scan(uint16_t *x, uint16_t *y)
     if (!GPIO_ReadInputDataBit(GPIOF, GPIO_Pin_10))
     {
         return XPT2046_GetAverageXY(x, y);
+    }
+    return 0; // 没有触摸
+}
+uint8_t XPT2046_IsPressed(void)
+{
+    // PENIRQ = 0 表示触摸
+    if (!GPIO_ReadInputDataBit(GPIOF, GPIO_Pin_10))
+    {
+        return 1;
     }
     return 0; // 没有触摸
 }
