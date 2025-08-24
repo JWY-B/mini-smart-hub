@@ -1,13 +1,13 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-23 13:37:56
- * @LastEditTime: 2025-08-24 14:36:58
+ * @LastEditTime: 2025-08-24 14:40:54
  * @FilePath: \mini-smart-hub\Hardware\XPT2046.h
  * @Description:
  */
 #ifndef __XPT2046_H
 #define __XPT2046_H
-
+#include "stm32f10x.h"
 //==== XPT2046 软件SPI 引脚定义 ====//
 #define XPT2046_CS_PORT GPIOF
 #define XPT2046_CS_PIN GPIO_Pin_11
