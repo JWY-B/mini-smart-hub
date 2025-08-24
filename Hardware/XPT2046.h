@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-23 13:37:56
- * @LastEditTime: 2025-08-24 00:15:38
+ * @LastEditTime: 2025-08-24 14:36:58
  * @FilePath: \mini-smart-hub\Hardware\XPT2046.h
  * @Description:
  */
@@ -44,5 +44,11 @@
 
 #define CMD_X 0xD0 // 读取X通道命令
 #define CMD_Y 0x90 // 读取Y通道命令
+void XPT2046_TouchInit(void);
+uint8_t XPT2046_WriteByte(uint8_t data);
+uint16_t XPT2046_ReadADC(uint8_t cmd);
+void XPT2046_GetRawXY(uint16_t *x, uint16_t *y);
+uint8_t XPT2046_GetAverageXY(uint16_t *x, uint16_t *y);
+uint8_t XPT2046_Scan(uint16_t *x, uint16_t *y);
 
 #endif

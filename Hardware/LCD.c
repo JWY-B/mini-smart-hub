@@ -1,7 +1,7 @@
 /*
  * @AuthorD: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-23 23:35:33
+ * @LastEditTime: 2025-08-24 13:12:57
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
  * @Description:st7796驱动
  */
@@ -554,5 +554,35 @@ void LCD_DrawLine(uint16_t x0, uint16_t y0,
             err += dx;
             y0 += sy;
         }
+    }
+}
+// 在 (x0,y0) 画一个半径 r 的圆
+void LCD_DrawCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t color)
+{
+    int x = 0, y = r;
+    int d = 3 - (r << 1);
+
+    while (x <= y)
+    {
+        LCD_DrawPoint(x0 + x, y0 + y, color);
+        LCD_DrawPoint(x0 - x, y0 + y, color);
+        LCD_DrawPoint(x0 + x, y0 - y, color);
+        LCD_DrawPoint(x0 - x, y0 - y, color);
+
+        LCD_DrawPoint(x0 + y, y0 + x, color);
+        LCD_DrawPoint(x0 - y, y0 + x, color);
+        LCD_DrawPoint(x0 + y, y0 - x, color);
+        LCD_DrawPoint(x0 - y, y0 - x, color);
+
+        if (d < 0)
+        {
+            d += (x << 2) + 6;
+        }
+        else
+        {
+            d += ((x - y) << 2) + 10;
+            y--;
+        }
+        x++;
     }
 }

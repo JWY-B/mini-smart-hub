@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:09:07
- * @LastEditTime: 2025-08-24 00:12:07
+ * @LastEditTime: 2025-08-24 13:13:19
  * @FilePath: \mini-smart-hub\Hardware\LCD.h
  * @Description: st7796驱动
  */
@@ -53,5 +53,5 @@ void LCD_Clear(uint16_t color);
 void LCD_DrawLine(uint16_t x0, uint16_t y0,
                   uint16_t x1, uint16_t y1,
                   uint16_t color);
-
+void LCD_DrawCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t color);
 #endif
