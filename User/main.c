@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-16 18:13:19
- * @LastEditTime: 2025-08-25 17:53:00
+ * @LastEditTime: 2025-08-26 01:06:49
  * @FilePath: \mini-smart-hub\User\main.c
  * @Description:
  */
@@ -34,7 +34,6 @@ int main(void)
 {
 	Serial_Init(); // 串口初始化
 	LCD_Init();	   // LCD初始化
-	// LCD_Fill(0, 0, 320, 480, 0x0000); // White
 	XPT2046_TouchInit();
 	lv_init();			  // LVGL 初始化
 	lv_port_disp_init();  // 注册LVGL的显示任务
@@ -43,12 +42,12 @@ int main(void)
 	DHT11_Init();
 	setup_ui(&guider_ui);
 	events_init(&guider_ui);
-	uint8_t temp,humi;
+	uint8_t temp, humi;
 	while (1)
 	{
-		DHT11_Read_Data(&temp,&humi);
-		printf("temp %d ,humi %d\r\n",humi,temp);
+		DHT11_Read_Data(&temp, &humi);
+		printf("temp %d ,humi %d\r\n", humi, temp);
 		delay_ms(1000);
-		//lv_timer_handler();
+		// lv_timer_handler();
 	}
 }

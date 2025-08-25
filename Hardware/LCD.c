@@ -111,7 +111,7 @@ void LCD_Init(void)
     // GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
     // GPIO_Init(GPIOB, &GPIO_InitStructure);
     // GPIO_SetBits(GPIOB, GPIO_Pin_0);
-    LCD_Backlight_PWM_Init();
+    PWM_Init();
     FSMC_NORSRAMInitTypeDef FSMC_NORSRAMInitStructure;
     FSMC_NORSRAMTimingInitTypeDef ReadWriteTimingStruct, WriteTimingStruct;
     ReadWriteTimingStruct.FSMC_AddressSetupTime = 1;

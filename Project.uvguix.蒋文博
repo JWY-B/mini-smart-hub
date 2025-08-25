@@ -1815,27 +1815,27 @@
       <ActiveTab>0</ActiveTab>
       <Doc>
         <Name>.\User\main.c</Name>
-        <ColumnNumber>9</ColumnNumber>
-        <TopLine>18</TopLine>
-        <CurrentLine>46</CurrentLine>
+        <ColumnNumber>28</ColumnNumber>
+        <TopLine>15</TopLine>
+        <CurrentLine>45</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
       </Doc>
       <Doc>
         <Name>.\Hardware\LCD.c</Name>
-        <ColumnNumber>0</ColumnNumber>
-        <TopLine>560</TopLine>
-        <CurrentLine>595</CurrentLine>
+        <ColumnNumber>4</ColumnNumber>
+        <TopLine>104</TopLine>
+        <CurrentLine>114</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
       </Doc>
       <Doc>
         <Name>.\Hardware\PWM.c</Name>
-        <ColumnNumber>25</ColumnNumber>
-        <TopLine>1</TopLine>
-        <CurrentLine>40</CurrentLine>
+        <ColumnNumber>0</ColumnNumber>
+        <TopLine>44</TopLine>
+        <CurrentLine>80</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
@@ -1844,7 +1844,7 @@
         <Name>.\Hardware\PWM.h</Name>
         <ColumnNumber>0</ColumnNumber>
         <TopLine>1</TopLine>
-        <CurrentLine>1</CurrentLine>
+        <CurrentLine>19</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
@@ -1860,9 +1860,9 @@
       </Doc>
       <Doc>
         <Name>.\Hardware\DHT11.c</Name>
-        <ColumnNumber>15</ColumnNumber>
-        <TopLine>111</TopLine>
-        <CurrentLine>26</CurrentLine>
+        <ColumnNumber>3</ColumnNumber>
+        <TopLine>10</TopLine>
+        <CurrentLine>29</CurrentLine>
         <Folding>1</Folding>
         <ContractedFolders></ContractedFolders>
         <PaneID>0</PaneID>
