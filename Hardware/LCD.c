@@ -1,7 +1,7 @@
 /*
  * @AuthorD: jwy 2660243285@qq.com
  * @Date: 2025-08-17 19:08:54
- * @LastEditTime: 2025-08-24 13:12:57
+ * @LastEditTime: 2025-08-25 17:52:25
  * @FilePath: \mini-smart-hub\Hardware\LCD.c
  * @Description:st7796驱动
  */
@@ -9,6 +9,7 @@
 #include "LCD.h"
 #include "Delay.h"
 #include "ASCII_Font.h"
+#include "PWM.h"
 /**
  * @description: 写st7796命令寄存器
  * @param {uint16_t} regval:命令值
@@ -106,10 +107,11 @@ void LCD_Init(void)
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_12;
     GPIO_Init(GPIOG, &GPIO_InitStructure);
 
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-
+    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    // GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    // GPIO_Init(GPIOB, &GPIO_InitStructure);
+    // GPIO_SetBits(GPIOB, GPIO_Pin_0);
+    LCD_Backlight_PWM_Init();
     FSMC_NORSRAMInitTypeDef FSMC_NORSRAMInitStructure;
     FSMC_NORSRAMTimingInitTypeDef ReadWriteTimingStruct, WriteTimingStruct;
     ReadWriteTimingStruct.FSMC_AddressSetupTime = 1;
@@ -276,6 +278,7 @@ void LCD_Init(void)
     printf("%x\r\n", lcddev.id);
 }
 
+// void LCD_B
 /**
  * @description: 设置LCD光标位置
  * @param {uint16_t} Xpos:X坐标
@@ -585,4 +588,9 @@ void LCD_DrawCircle(uint16_t x0, uint16_t y0, uint16_t r, uint16_t color)
         }
         x++;
     }
+}
+
+void LCD_BackLight(uint8_t brightness)
+{
+    LCD_Backlight_SetBrightness(brightness);
 }
