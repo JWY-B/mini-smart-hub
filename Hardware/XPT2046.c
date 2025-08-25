@@ -111,78 +111,80 @@ void XPT2046_GetRawXY(uint16_t *x, uint16_t *y)
  * @param {uint16_t} *y:y坐标
  * @return {1:成功}
  */
+#define XPT2046_PEN_IS_DOWN() (!GPIO_ReadInputDataBit(GPIOF, GPIO_Pin_10)) // PENIRQ=0表示触摸
+
 uint8_t XPT2046_GetAverageXY(uint16_t *x, uint16_t *y)
 {
-    uint16_t xbuf[9], ybuf[9];
-    uint8_t i, j;
-    if (XPT2046_PEN_READ())
-        return 0;
+    if (!XPT2046_PEN_IS_DOWN())
+        return 0; // 无触摸，直接返回
 
-    for (i = 0; i < 9; i++)
+    uint16_t xbuf[9], ybuf[9];
+    for (uint8_t i = 0; i < 9; i++)
     {
         xbuf[i] = XPT2046_ReadADC(CMD_X);
         ybuf[i] = XPT2046_ReadADC(CMD_Y);
-        //delay_us(150);
     }
 
-    // 排序 -> 取中间的 5 个平均
-    for (i = 0; i < 9 - 1; i++)
-        for (j = i + 1; j < 9; j++)
+    // 简单选择排序（比冒泡更简洁）
+    for (uint8_t i = 0; i < 8; i++)
+    {
+        uint8_t min = i;
+        for (uint8_t j = i + 1; j < 9; j++)
         {
-            if (xbuf[i] > xbuf[j])
-            {
-                uint16_t t = xbuf[i];
-                xbuf[i] = xbuf[j];
-                xbuf[j] = t;
-            }
-            if (ybuf[i] > ybuf[j])
-            {
-                uint16_t t = ybuf[i];
-                ybuf[i] = ybuf[j];
-                ybuf[j] = t;
-            }
+            if (xbuf[j] < xbuf[min])
+                min = j;
+        }
+        if (min != i)
+        {
+            uint16_t t = xbuf[i];
+            xbuf[i] = xbuf[min];
+            xbuf[min] = t;
         }
 
+        min = i;
+        for (uint8_t j = i + 1; j < 9; j++)
+        {
+            if (ybuf[j] < ybuf[min])
+                min = j;
+        }
+        if (min != i)
+        {
+            uint16_t t = ybuf[i];
+            ybuf[i] = ybuf[min];
+            ybuf[min] = t;
+        }
+    }
+
     uint32_t sumx = 0, sumy = 0;
-    for (i = 2; i < 7; i++)
-    {
+    for (uint8_t i = 2; i < 7; i++)
+    { // 取中间5个
         sumx += xbuf[i];
         sumy += ybuf[i];
     }
 
-    *x = sumx / 5;
-    *y = sumy / 5;
+    // 得到滤波后的原始坐标
+    uint16_t tx = sumx / 5;
+    uint16_t ty = sumy / 5;
 
-    uint16_t temp;
-    temp = *x;
-    *x = *y;
-    *y = temp;
-    *x = (*x * 0.26 - 50.0f) + 15;
-    *y = 320 - (*y * 0.19 - 32.0f) + 5;
+    // 坐标变换与校正
+    *x = (ty * 0.26f - 50.0f) + 15;
+    *y = 320 - (tx * 0.19f - 32.0f) + 5;
+
     return 1;
 }
 
 /**
- * @description: 返回是否有触摸，x,y 为触摸点坐标
- * @param {uint16_t} *x:x坐标
- * @param {uint16_t} *y:y坐标
- * @return {0:没有触摸，否则返回xy坐标}
+ * @brief 返回是否有触摸，若有则给出坐标
  */
 uint8_t XPT2046_Scan(uint16_t *x, uint16_t *y)
 {
-    // PENIRQ = 0 表示触摸
-    if (!GPIO_ReadInputDataBit(GPIOF, GPIO_Pin_10))
-    {
-        return XPT2046_GetAverageXY(x, y);
-    }
-    return 0; // 没有触摸
+    return XPT2046_PEN_IS_DOWN() ? XPT2046_GetAverageXY(x, y) : 0;
 }
+
+/**
+ * @brief 是否按下（无坐标）
+ */
 uint8_t XPT2046_IsPressed(void)
 {
-    // PENIRQ = 0 表示触摸
-    if (!GPIO_ReadInputDataBit(GPIOF, GPIO_Pin_10))
-    {
-        return 1;
-    }
-    return 0; // 没有触摸
+    return XPT2046_PEN_IS_DOWN();
 }
