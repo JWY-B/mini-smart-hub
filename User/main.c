@@ -1,8 +1,8 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-16 18:13:19
- * @LastEditTime: 2025-08-26 01:06:49
- * @FilePath: \mini-smart-hub\User\main.c
+ * @LastEditTime: 2025-08-26 13:14:02
+ * @FilePath: \智能家居中控系统\mini-smart-hub\User\main.c
  * @Description:
  */
 
@@ -20,6 +20,8 @@
 #include "events_init.h"
 #include "custom.h"
 #include "DHT11.h"
+// #include "setup_scr_screen.c"
+
 extern _lcd_dev lcddev = {
 	.width = 480,	 // 宽度
 	.height = 320,	 // 高度
@@ -43,11 +45,18 @@ int main(void)
 	setup_ui(&guider_ui);
 	events_init(&guider_ui);
 	uint8_t temp, humi;
+	char buf[8];
+	lv_obj_clear_flag(guider_ui.screen_temp_arc, LV_OBJ_FLAG_CLICKABLE);
 	while (1)
 	{
-		DHT11_Read_Data(&temp, &humi);
+		DHT11_Read_Data(&humi, &temp);
+		sprintf(buf, "%d", temp);
+
 		printf("temp %d ,humi %d\r\n", humi, temp);
-		delay_ms(1000);
-		// lv_timer_handler();
+		// delay_ms(1000);
+		lv_arc_set_value(guider_ui.screen_temp_arc, temp);
+		lv_span_set_text(guider_ui.screen_temp_value_span, buf);
+		lv_timer_handler();
+		//  1. 测试 LCD 背光从 0% ~ 100%
 	}
 }

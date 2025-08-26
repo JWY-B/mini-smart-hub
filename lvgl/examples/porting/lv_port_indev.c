@@ -221,10 +221,10 @@ static bool touchpad_is_pressed(void)
 static void touchpad_get_xy(lv_coord_t *x, lv_coord_t *y)
 {
     /*Your code comes here*/
-	//uint16_t i,j;
-	//XPT2046_Scan((uint16_t *)*x,(uint16_t*)*y);
-    XPT2046_GetAverageXY(x,y);
-    printf("Touchpad coordinates: (%d, %d)\n",*x,*y);
+    // uint16_t i,j;
+    // XPT2046_Scan((uint16_t *)*x,(uint16_t*)*y);
+    XPT2046_GetAverageXY(x, y);
+    // printf("Touchpad coordinates: (%d, %d)\n",*x,*y);
     LCD_DrawPoint(*x, *y, 0xcccc);
 }
 

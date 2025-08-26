@@ -1,8 +1,8 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-25 17:39:13
- * @LastEditTime: 2025-08-26 01:09:47
- * @FilePath: \mini-smart-hub\Hardware\PWM.c
+ * @LastEditTime: 2025-08-26 11:32:15
+ * @FilePath: \智能家居中控系统\mini-smart-hub\Hardware\PWM.c
  * @Description:PWM驱动
  */
 #include "stm32f10x.h"
@@ -54,6 +54,18 @@ void PWM_Init(void)
     TIM_OC3Init(PWM_TIM, &TIM_OCInitStruct);
     TIM_OC3PreloadConfig(PWM_TIM, TIM_OCPreload_Enable);
 
+    GPIO_InitStruct.GPIO_Pin = Motor2_GPIO_PWM_PIN;
+    GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF_PP; // 复用推挽
+    GPIO_InitStruct.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(Motor2_GPIO_PORT, &GPIO_InitStruct);
+    // 5. Motor_PWM模式配置
+    TIM_OCInitStruct.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStruct.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStruct.TIM_Pulse = 0; // 初始占空比 0%，电机不转
+    TIM_OCInitStruct.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OC4Init(PWM_TIM, &TIM_OCInitStruct);
+    TIM_OC4PreloadConfig(PWM_TIM, TIM_OCPreload_Enable);
+
     TIM_Cmd(PWM_TIM, ENABLE);
 }
 /**
@@ -81,4 +93,12 @@ void Motor_SetSpeed(uint8_t speed)
         speed = 100;
     uint16_t pulse = speed * 999 / 100; // 占空比计算
     TIM_SetCompare3(PWM_TIM, pulse);
+}
+
+void Motor_SetSpeed2(uint8_t speed)
+{
+    if (speed > 100)
+        speed = 100;
+    uint16_t pulse = speed * 999 / 100; // 占空比计算
+    TIM_SetCompare4(PWM_TIM, pulse);
 }

@@ -1,8 +1,8 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-25 23:33:19
- * @LastEditTime: 2025-08-25 23:44:21
- * @FilePath: \mini-smart-hub\Hardware\DHT11.c
+ * @LastEditTime: 2025-08-26 12:48:48
+ * @FilePath: \智能家居中控系统\mini-smart-hub\Hardware\DHT11.c
  * @Description:温湿度传感器驱动
  */
 
@@ -148,7 +148,7 @@ uint8_t DHT11_Read_Data(uint8_t *humidity, uint8_t *temperature)
     {
         data[i] = DHT11_Read_Byte();
     }
-    if (data[0] + data[1] + data[2] + data[3] == data[4])
+    if (data[0] + data[1] + data[2] + data[3] == data[4] && data[0]<=100 &&data[2] <=50)
     {
         *humidity = data[0];
         *temperature = data[2];

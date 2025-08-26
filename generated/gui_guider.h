@@ -20,13 +20,20 @@ typedef struct
   
 	lv_obj_t *screen;
 	bool screen_del;
-	lv_obj_t *screen_btn_1;
-	lv_obj_t *screen_btn_1_label;
-	lv_obj_t *screen_arc_1;
-	lv_obj_t *screen_arc_2;
-	lv_obj_t *screen_label_1;
-	lv_obj_t *screen_label_2;
-	lv_obj_t *screen_ddlist_1;
+	lv_obj_t *screen_temp_arc;
+	lv_obj_t *screen_humi_arc;
+	lv_obj_t *screen_temp_lable;
+	lv_obj_t *screen_humi_label;
+	lv_obj_t *screen_Motor_list;
+	lv_obj_t *screen_light_slider;
+	lv_obj_t *screen_light_label;
+	lv_obj_t *screen_Servo_list;
+	lv_obj_t *screen_temp_value;
+	lv_span_t *screen_temp_value_span;
+	lv_obj_t *screen_humi_value;
+	lv_span_t *screen_humi_value_span;
+	lv_obj_t *screen_servo_lable;
+	lv_obj_t *screen_motor_label;
 }lv_ui;
 
 typedef void (*ui_setup_scr_t)(lv_ui * ui);
