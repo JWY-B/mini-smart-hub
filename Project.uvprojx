@@ -675,6 +675,21 @@
               <FileType>5</FileType>
               <FilePath>.\User\FreeRTOSConfig.h</FilePath>
             </File>
+            <File>
+              <FileName>FreeRTOS_Demo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\FreeRTOS_Demo.c</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOS_Demo.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\User\FreeRTOS_Demo.h</FilePath>
+            </File>
+            <File>
+              <FileName>Global.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\User\Global.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

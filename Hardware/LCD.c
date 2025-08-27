@@ -10,6 +10,16 @@
 #include "Delay.h"
 #include "ASCII_Font.h"
 #include "PWM.h"
+
+_lcd_dev lcddev = {
+	.width = 480,	 // 宽度
+	.height = 320,	 // 高度
+	.id = 0x0000,	 // ST7796 ID
+	.dir = 1,		 // 0=竖屏 1=横屏
+	.wramcmd = 0x2C, // 写GRAM命令
+	.setxcmd = 0x2A, // 设置X坐标命令
+	.setycmd = 0x2B	 // 设置Y坐标命令
+};
 /**
  * @description: 写st7796命令寄存器
  * @param {uint16_t} regval:命令值

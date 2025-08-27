@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-24 18:09:10
- * @LastEditTime: 2025-08-24 21:09:47
+ * @LastEditTime: 2025-08-27 10:29:50
  * @FilePath: \mini-smart-hub\System\TIM3.c
  * @Description:
  */
@@ -24,8 +24,8 @@ void TIM3_Init(void)
 
     NVIC_InitTypeDef NVIC_InitStructure;
     NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
@@ -47,7 +47,7 @@ void TIM3_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
     {
-        lv_tick_inc(1); // LVGL 心跳 +1ms
+        // lv_tick_inc(1);
         TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
     }
 }
