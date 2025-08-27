@@ -750,6 +750,26 @@
               <FileType>5</FileType>
               <FilePath>.\Hardware\DHT11.h</FilePath>
             </File>
+            <File>
+              <FileName>Usart3.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\Usart3.c</FilePath>
+            </File>
+            <File>
+              <FileName>Usart3.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\Usart3.h</FilePath>
+            </File>
+            <File>
+              <FileName>ESP32_Protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\ESP32_Protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>ESP32_Protocol.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\ESP32_Protocol.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

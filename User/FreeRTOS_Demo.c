@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-26 19:58:13
- * @LastEditTime: 2025-08-27 20:18:12
+ * @LastEditTime: 2025-08-28 01:25:52
  * @FilePath: \mini-smart-hub\User\FreeRTOS_Demo.c
  * @Description:
  */
@@ -25,6 +25,8 @@
 #include "queue.h"
 #include "PWM.h"
 #include "GuiUtil.h"
+#include "Usart3.h"
+#include "ESP32_Protocol.h"
 lv_ui guider_ui;
 SystemStatus_t SystemStatus;
 SemaphoreHandle_t System_mutex;
@@ -53,6 +55,18 @@ void DHT11_task(void *pvParameters);
 TaskHandle_t Control_handle;
 void Control_task(void *pvParameters);
 
+/* SendToESP32任务的配置 */
+#define SendToESP32_TASK_STACK 128
+#define SendToESP32_TASK_PRIORITY 1
+TaskHandle_t SendToESP32_handle;
+void SendToESP32_task(void *pvParameters);
+
+/* ReceiveToESP32任务的配置 */
+#define ReceiveToESP32_TASK_STACK 128
+#define ReceiveToESP32_TASK_PRIORITY 3
+TaskHandle_t ReceiveToESP32_handle;
+void ReceiveToESP32_task(void *pvParameters);
+
 void freertos_start(void)
 {
     /* 1.创建一个启动任务 */
@@ -72,6 +86,7 @@ void start_task(void *pvParameters)
     /* 进入临界区:保护临界区里的代码不会被打断 */
     taskENTER_CRITICAL();
 
+    USART3_Init(115200);
     Serial_Init();
     System_mutex = xSemaphoreCreateMutex();
     if (System_mutex == NULL)
@@ -102,6 +117,21 @@ void start_task(void *pvParameters)
                 (void *)NULL,
                 (UBaseType_t)Control_TASK_PRIORITY,
                 (TaskHandle_t *)&Control_handle);
+
+    xTaskCreate((TaskFunction_t)SendToESP32_task,
+                (char *)"SendToESP32",
+                (configSTACK_DEPTH_TYPE)SendToESP32_TASK_STACK,
+                (void *)NULL,
+                (UBaseType_t)SendToESP32_TASK_PRIORITY,
+                (TaskHandle_t *)&SendToESP32_handle);
+
+    xTaskCreate((TaskFunction_t)ReceiveToESP32_task,
+                (char *)"ReceiveToESP32",
+                (configSTACK_DEPTH_TYPE)ReceiveToESP32_TASK_STACK,
+                (void *)NULL,
+                (UBaseType_t)ReceiveToESP32_TASK_PRIORITY,
+                (TaskHandle_t *)&ReceiveToESP32_handle);
+
     vTaskDelete(NULL);
 
     /* 退出临界区 */
@@ -137,8 +167,12 @@ void GUI_task(void *pvParameters)
             sprintf(buf, "%.1f%%", h);
             lv_arc_set_value(guider_ui.screen_humi_arc, (int16_t)h);
             lv_span_set_text(guider_ui.screen_humi_value_span, buf);
-            lv_dropdown_set_selected(guider_ui.screen_Motor_list, get_motor_dropdown_index(LocalStatus.motor));
-            lv_dropdown_set_selected(guider_ui.screen_Servo_list, get_motor_dropdown_index(LocalStatus.servo));
+            lv_dropdown_set_selected(guider_ui.screen_Motor_list,
+                                     LocalStatus.motor.mode == MOTOR_MODE_AUTO ? 0 : get_motor_dropdown_index(LocalStatus.motor));
+
+            lv_dropdown_set_selected(guider_ui.screen_Servo_list,
+                                     LocalStatus.servo.mode == MOTOR_MODE_AUTO ? 0 : get_motor_dropdown_index(LocalStatus.servo));
+            lv_slider_set_value(guider_ui.screen_light_slider, LocalStatus.light.brightness, LV_ANIM_OFF);
         }
         lv_timer_handler();
         vTaskDelay(pdMS_TO_TICKS(25));
@@ -254,9 +288,84 @@ void Control_task(void *pvParameters)
             local_status = SystemStatus;
             xSemaphoreGive(System_mutex);
         }
-        printf("Temperature: %d C, Humidity: %d%%\r\n", local_status.temperature, local_status.humidity);
-        printf("Motor:%d   Servo:%d\r\n", local_status.motor.mode, local_status.servo.mode);
-        printf("Motor Speed: %d%%, Servo Angle: %d%%\r\n", local_status.motor.value, local_status.servo.value);
-        printf("Light Brightness: %d%%\r\n", local_status.light.brightness);
+    }
+}
+void SendToESP32_task(void *pvParameters)
+{
+    SystemStatus_t LocalStatus;
+    uint8_t data[9];
+    data[0] = 0xFF;
+    data[8] = 0xFE;
+
+    while (1)
+    {
+        // 发送数据到ESP32
+        if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        {
+            LocalStatus = SystemStatus;
+            xSemaphoreGive(System_mutex);
+            data[1] = LocalStatus.temperature;
+            data[2] = LocalStatus.humidity;
+            data[3] = LocalStatus.light.brightness;
+            data[4] = LocalStatus.motor.mode;
+            data[5] = LocalStatus.motor.value;
+            data[6] = LocalStatus.servo.mode;
+            data[7] = LocalStatus.servo.value;
+            // USART3_SendArray(data, 9);
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+void ReceiveToESP32_task(void *pvParameters)
+{
+    ESP32_Protocol_Init();
+    uint8_t rxByte;
+    ESP32Data_t data;
+    char buf[128];
+    int len;
+    MotorMessage_t motor_msg;
+    MotorMessage_t servo_msg;
+    LightMessage_t light_msg;
+    while (1)
+    {
+        if (xQueueReceive(usart3_rxQueue, &rxByte, portMAX_DELAY) == pdPASS)
+        {
+            // 只有完整帧解析完成才打印
+            if (ProcessESP32Byte(rxByte))
+            {
+                data = GetESP32Data(); // 线程安全获取
+                data.light.brightness = (data.light.brightness < 20) ? 20 : (data.light.brightness > 100) ? 100
+                                                                                                          : data.light.brightness;
+
+                data.motor.mode = (data.motor.mode == 0) ? 0 : 1;
+                data.motor.value = (data.motor.value <= 25) ? 25 : (data.motor.value <= 50) ? 50
+                                                               : (data.motor.value < 75)    ? 75
+                                                                                            : 100;
+
+                data.servo.mode = (data.servo.mode == 0) ? 0 : 1;
+                data.servo.value = (data.servo.value <= 25) ? 25 : (data.servo.value <= 50) ? 50
+                                                               : (data.servo.value <= 75)   ? 75
+                                                                                            : 100;
+
+                light_msg.brightness = data.light.brightness;
+                motor_msg.mode = data.motor.mode;
+                motor_msg.value = data.motor.value;
+                servo_msg.mode = data.servo.mode;
+                servo_msg.value = data.servo.value;
+                xQueueSend(lightQueue, &light_msg, 0);
+                xQueueSend(motorQueue, &motor_msg, 0);
+                xQueueSend(servoQueue, &servo_msg, 0);
+
+                if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+                {
+                    SystemStatus.light.brightness = data.light.brightness;
+                    SystemStatus.motor.mode = data.motor.mode;
+                    SystemStatus.motor.value = data.motor.value;
+                    SystemStatus.servo.mode = data.servo.mode;
+                    SystemStatus.servo.value = data.servo.value;
+                    xSemaphoreGive(System_mutex);
+                }
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-16 18:13:19
- * @LastEditTime: 2025-08-27 01:43:06
+ * @LastEditTime: 2025-08-27 23:48:18
  * @FilePath: \mini-smart-hub\User\main.c
  * @Description:
  */
@@ -23,13 +23,15 @@
 #include "FreeRTOS_Demo.h"
 #include "semphr.h"
 #include "Global.h"
+#include "Usart3.h"
 void vApplicationTickHook(void)
 {
 	lv_tick_inc(1);
 }
+
 int main(void)
 {
-
+	// USART3_Init();
 	freertos_start();
 	while (1)
 	{
