@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-26 19:58:13
- * @LastEditTime: 2025-08-27 11:03:08
+ * @LastEditTime: 2025-08-27 15:44:57
  * @FilePath: \mini-smart-hub\User\FreeRTOS_Demo.c
  * @Description:
  */
@@ -17,12 +17,13 @@
 #include "XPT2046.h"
 #include "Delay.h"
 #include <stdlib.h>
-#include "TIM3.h"
 #include "gui_guider.h"
 #include "events_init.h"
 #include "custom.h"
 #include "DHT11.h"
 #include "Global.h"
+#include "queue.h"
+#include "PWM.h"
 /* 启动任务的配置 */
 #define START_TASK_STACK 128
 #define START_TASK_PRIORITY 1
@@ -40,6 +41,12 @@ void GUI_task(void *pvParameters);
 #define DHT11_TASK_PRIORITY 2
 TaskHandle_t DHT11_handle;
 void DHT11_task(void *pvParameters);
+
+/* Control任务的配置 */
+#define Control_TASK_STACK 128
+#define Control_TASK_PRIORITY 3
+TaskHandle_t Control_handle;
+void Control_task(void *pvParameters);
 
 void freertos_start(void)
 {
@@ -78,6 +85,12 @@ void start_task(void *pvParameters)
                 (UBaseType_t)DHT11_TASK_PRIORITY,
                 (TaskHandle_t *)&DHT11_handle);
 
+    xTaskCreate((TaskFunction_t)Control_task,
+                (char *)"Control",
+                (configSTACK_DEPTH_TYPE)Control_TASK_STACK,
+                (void *)NULL,
+                (UBaseType_t)Control_TASK_PRIORITY,
+                (TaskHandle_t *)&Control_handle);
     vTaskDelete(NULL);
 
     /* 退出临界区 */
@@ -86,16 +99,25 @@ void start_task(void *pvParameters)
 
 void GUI_task(void *pvParameters)
 {
-    // Serial_Init(); // 串口初始化
-    LCD_Init(); // LCD初始化
+    Queue_Init(); // Serial_Init(); // 串口初始化
+    LCD_Init();   // LCD初始化
     XPT2046_TouchInit();
     lv_init();            // LVGL 初始化
     lv_port_disp_init();  // 注册LVGL的显示任务
     lv_port_indev_init(); // 注册LVGL的触屏检测任务
-    TIM3_Init();
     setup_ui(&guider_ui);
     events_init(&guider_ui);
+
     char buf[32];
+
+    MotorMessage_t motor_message;
+    motor_message.mode = MOTOR_MODE_AUTO;
+    motor_message.value = 0; // 自动模式初始值
+    xQueueSend(motorQueue, &motor_message, 0);
+
+    // 同时设置下拉列表显示为 Auto
+    lv_dropdown_set_selected(guider_ui.screen_Motor_list, 0);
+
     while (1)
     {
         if (xSemaphoreTake(dht11_mutex, pdMS_TO_TICKS(20)) == pdTRUE)
@@ -140,5 +162,70 @@ void DHT11_task(void *pvParameters)
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+void Control_task(void *pvParameters)
+{
+    MotorMessage_t motor_msg;
+    MotorMessage_t servo_msg;
+    LightMessage_t light_msg;
+    uint8_t temp = 0, humi = 0;
+    while (1)
+    {
+        if (xSemaphoreTake(dht11_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        {
+            temp = dht11_data.temperature;
+            humi = dht11_data.humidity;
+            xSemaphoreGive(dht11_mutex);
+        }
+        QueueSetMemberHandle_t activated_queue;
+        activated_queue = xQueueSelectFromSet(queue_set, portMAX_DELAY);
+
+        if (activated_queue == motorQueue)
+        {
+            if (xQueueReceive(motorQueue, &motor_msg, 0) == pdPASS)
+            {
+                // 电机控制逻辑
+                if (motor_msg.mode == MOTOR_MODE_AUTO)
+                {
+                    // 根据温度设置速度
+                    if (temp < 25)
+                        motor_msg.value = 25;
+                    else if (temp < 27)
+                        motor_msg.value = 50;
+                    else if (temp < 30)
+                        motor_msg.value = 75;
+                    else
+                        motor_msg.value = 100;
+                }
+                Motor_SetSpeed(motor_msg.value);
+            }
+        }
+        else if (activated_queue == lightQueue)
+        {
+            if (xQueueReceive(lightQueue, &light_msg, 0) == pdPASS)
+            {
+                LCD_Backlight_SetBrightness(light_msg.brightness);
+            }
+        }
+        else if (activated_queue == servoQueue)
+        {
+            if (xQueueReceive(servoQueue, &servo_msg, 0) == pdPASS)
+            {
+                if (servo_msg.mode == MOTOR_MODE_AUTO)
+                {
+                    if (humi < 40)
+                        servo_msg.value = 25;
+                    else if (humi < 60)
+                        servo_msg.value = 50;
+                    else if (humi < 80)
+                        servo_msg.value = 75;
+                    else
+                        servo_msg.value = 100;
+                }
+            }
+            Motor_SetSpeed2(servo_msg.value);
+        }
     }
 }

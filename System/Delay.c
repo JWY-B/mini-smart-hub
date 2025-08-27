@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-17 23:11:03
- * @LastEditTime: 2025-08-27 10:43:07
+ * @LastEditTime: 2025-08-27 11:13:16
  * @FilePath: \mini-smart-hub\System\Delay.c
  * @Description:
  */
@@ -9,6 +9,7 @@
 #include "Delay.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#define IN_FREERTOS 1
 /**
  * @brief  微秒级延时
  * @param  xus 延时时长，范围：0~233015

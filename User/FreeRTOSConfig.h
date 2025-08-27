@@ -81,5 +81,5 @@ NVIC value of 255. */
 #define vPortSVCHandler SVC_Handler
 #define INCLUDE_xTaskGetSchedulerState 1
 #define configUSE_MUTEXES 1
-
+#define configUSE_QUEUE_SETS 1
 #endif /* FREERTOS_CONFIG_H */

@@ -334,8 +334,8 @@ void setup_scr_screen(lv_ui *ui)
     lv_style_set_text_color(&ui->screen_temp_value_span->style, lv_color_hex(0xf00000));
     lv_style_set_text_decor(&ui->screen_temp_value_span->style, LV_TEXT_DECOR_NONE);
     lv_style_set_text_font(&ui->screen_temp_value_span->style, &lv_font_montserratMedium_16);
-    lv_obj_set_pos(ui->screen_temp_value, 79, 96);
-    lv_obj_set_size(ui->screen_temp_value, 49, 38);
+    lv_obj_set_pos(ui->screen_temp_value, 70, 96);
+    lv_obj_set_size(ui->screen_temp_value, 60, 38);
 
     // Write style state: LV_STATE_DEFAULT for &style_screen_temp_value_main_main_default
     static lv_style_t style_screen_temp_value_main_main_default;
@@ -363,8 +363,8 @@ void setup_scr_screen(lv_ui *ui)
     lv_style_set_text_color(&ui->screen_humi_value_span->style, lv_color_hex(0x3000ff));
     lv_style_set_text_decor(&ui->screen_humi_value_span->style, LV_TEXT_DECOR_NONE);
     lv_style_set_text_font(&ui->screen_humi_value_span->style, &lv_font_montserratMedium_16);
-    lv_obj_set_pos(ui->screen_humi_value, 240, 96);
-    lv_obj_set_size(ui->screen_humi_value, 48, 31);
+    lv_obj_set_pos(ui->screen_humi_value, 230, 96);
+    lv_obj_set_size(ui->screen_humi_value, 60, 31);
 
     // Write style state: LV_STATE_DEFAULT for &style_screen_humi_value_main_main_default
     static lv_style_t style_screen_humi_value_main_main_default;

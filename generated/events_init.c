@@ -10,11 +10,13 @@
 #include "events_init.h"
 #include <stdio.h>
 #include "lvgl.h"
-#include "PWM.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "Global.h"
 #if LV_USE_GUIDER_SIMULATOR && LV_USE_FREEMASTER
 #include "freemaster_client.h"
 #endif
-
+static const uint16_t motorSpeeds[] = {25, 50, 75, 100};
 static void screen_Motor_list_event_handler(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
@@ -23,37 +25,18 @@ static void screen_Motor_list_event_handler(lv_event_t *e)
     case LV_EVENT_VALUE_CHANGED:
     {
         uint16_t id = lv_dropdown_get_selected(guider_ui.screen_Motor_list);
-
-        switch (id)
-        {
-        case (0):
-        {
-
-            break;
+        MotorMessage_t motor_message;
+        if (id == 0)
+        { // Auto 模式
+            motor_message.mode = MOTOR_MODE_AUTO;
+            motor_message.value = 0;
         }
-        case (1):
-        {
-            Motor_SetSpeed(25);
-            break;
+        else
+        { // 手动模式
+            motor_message.mode = MOTOR_MODE_MANUAL;
+            motor_message.value = motorSpeeds[id - 1];
         }
-        case (2):
-        {
-            Motor_SetSpeed(50);
-            break;
-        }
-        case (3):
-        {
-            Motor_SetSpeed(75);
-            break;
-        }
-        case (4):
-        {
-            Motor_SetSpeed(100);
-            break;
-        }
-        default:
-            break;
-        }
+        xQueueSend(motorQueue, &motor_message, 0);
         break;
     }
     default:
@@ -64,11 +47,14 @@ static void screen_Motor_list_event_handler(lv_event_t *e)
 static void screen_light_slider_event_handler(lv_event_t *e)
 {
     lv_event_code_t code = lv_event_get_code(e);
+    LightMessage_t light_message;
     switch (code)
     {
     case LV_EVENT_VALUE_CHANGED:
     {
-        LCD_Backlight_SetBrightness(lv_slider_get_value(guider_ui.screen_light_slider));
+        // LCD_Backlight_SetBrightness(lv_slider_get_value(guider_ui.screen_light_slider));
+        light_message.brightness = lv_slider_get_value(guider_ui.screen_light_slider);
+        xQueueSend(lightQueue, &light_message, 0);
         break;
     }
     default:
@@ -84,37 +70,18 @@ static void screen_Servo_list_event_handler(lv_event_t *e)
     case LV_EVENT_VALUE_CHANGED:
     {
         uint16_t id = lv_dropdown_get_selected(guider_ui.screen_Servo_list);
-
-        switch (id)
+        MotorMessage_t Servo_message;
+        if (id == 0)
         {
-        case (0):
+            Servo_message.mode = MOTOR_MODE_AUTO;
+            Servo_message.value = 0;
+        }
+        else
         {
-
-            break;
+            Servo_message.mode = MOTOR_MODE_MANUAL;
+            Servo_message.value = motorSpeeds[id - 1];
         }
-        case (1):
-        {
-            Motor_SetSpeed2(25);
-            break;
-        }
-        case (2):
-        {
-            Motor_SetSpeed2(50);
-            break;
-        }
-        case (3):
-        {
-            Motor_SetSpeed2(75);
-            break;
-        }
-        case (4):
-        {
-            Motor_SetSpeed2(100);
-            break;
-        }
-        default:
-            break;
-        }
+        xQueueSend(servoQueue, &Servo_message, 0);
         break;
     }
     default:

@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-16 18:13:19
- * @LastEditTime: 2025-08-27 10:29:46
+ * @LastEditTime: 2025-08-27 01:43:06
  * @FilePath: \mini-smart-hub\User\main.c
  * @Description:
  */
@@ -16,7 +16,6 @@
 #include "XPT2046.h"
 #include "Delay.h"
 #include <stdlib.h>
-#include "TIM3.h"
 #include "gui_guider.h"
 #include "events_init.h"
 #include "custom.h"
