@@ -23,21 +23,13 @@
 #include "FreeRTOS_Demo.h"
 #include "semphr.h"
 #include "Global.h"
-DHT11_Data_t dht11_data;
-SemaphoreHandle_t dht11_mutex;
 void vApplicationTickHook(void)
 {
 	lv_tick_inc(1);
 }
-lv_ui guider_ui;
 int main(void)
 {
-	Serial_Init();
-	dht11_mutex = xSemaphoreCreateMutex();
-	if (dht11_mutex == NULL)
-	{
-		printf("create mutex failed\r\n");
-	}
+
 	freertos_start();
 	while (1)
 	{

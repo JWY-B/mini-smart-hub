@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-26 19:58:13
- * @LastEditTime: 2025-08-27 15:44:57
+ * @LastEditTime: 2025-08-27 20:18:12
  * @FilePath: \mini-smart-hub\User\FreeRTOS_Demo.c
  * @Description:
  */
@@ -24,6 +24,11 @@
 #include "Global.h"
 #include "queue.h"
 #include "PWM.h"
+#include "GuiUtil.h"
+lv_ui guider_ui;
+SystemStatus_t SystemStatus;
+SemaphoreHandle_t System_mutex;
+
 /* 启动任务的配置 */
 #define START_TASK_STACK 128
 #define START_TASK_PRIORITY 1
@@ -67,6 +72,12 @@ void start_task(void *pvParameters)
     /* 进入临界区:保护临界区里的代码不会被打断 */
     taskENTER_CRITICAL();
 
+    Serial_Init();
+    System_mutex = xSemaphoreCreateMutex();
+    if (System_mutex == NULL)
+    {
+        printf("create mutex failed\r\n");
+    }
     TaskHandle_t GUI_handle;
 
     xTaskCreate((TaskFunction_t)GUI_task,
@@ -109,23 +120,16 @@ void GUI_task(void *pvParameters)
     events_init(&guider_ui);
 
     char buf[32];
-
-    MotorMessage_t motor_message;
-    motor_message.mode = MOTOR_MODE_AUTO;
-    motor_message.value = 0; // 自动模式初始值
-    xQueueSend(motorQueue, &motor_message, 0);
-
-    // 同时设置下拉列表显示为 Auto
-    lv_dropdown_set_selected(guider_ui.screen_Motor_list, 0);
+    SystemStatus_t LocalStatus;
 
     while (1)
     {
-        if (xSemaphoreTake(dht11_mutex, pdMS_TO_TICKS(20)) == pdTRUE)
+        if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(20)) == pdTRUE)
         {
-            float t = dht11_data.temperature;
-            float h = dht11_data.humidity;
-            xSemaphoreGive(dht11_mutex);
-
+            LocalStatus = SystemStatus;
+            xSemaphoreGive(System_mutex);
+            float t = LocalStatus.temperature;
+            float h = LocalStatus.humidity;
             // 在LVGL界面显示温湿度
             sprintf(buf, "%.1f C", t);
             lv_arc_set_value(guider_ui.screen_temp_arc, (int16_t)t);
@@ -133,9 +137,11 @@ void GUI_task(void *pvParameters)
             sprintf(buf, "%.1f%%", h);
             lv_arc_set_value(guider_ui.screen_humi_arc, (int16_t)h);
             lv_span_set_text(guider_ui.screen_humi_value_span, buf);
+            lv_dropdown_set_selected(guider_ui.screen_Motor_list, get_motor_dropdown_index(LocalStatus.motor));
+            lv_dropdown_set_selected(guider_ui.screen_Servo_list, get_motor_dropdown_index(LocalStatus.servo));
         }
         lv_timer_handler();
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(25));
     }
 }
 
@@ -149,11 +155,11 @@ void DHT11_task(void *pvParameters)
     {
         if (DHT11_Read_Data(&humi, &temp) == 0)
         {
-            if (xSemaphoreTake(dht11_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+            if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
             {
-                dht11_data.temperature = (float)temp;
-                dht11_data.humidity = (float)humi;
-                xSemaphoreGive(dht11_mutex);
+                SystemStatus.temperature = temp;
+                SystemStatus.humidity = humi;
+                xSemaphoreGive(System_mutex);
             }
         }
         else
@@ -173,11 +179,11 @@ void Control_task(void *pvParameters)
     uint8_t temp = 0, humi = 0;
     while (1)
     {
-        if (xSemaphoreTake(dht11_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
         {
-            temp = dht11_data.temperature;
-            humi = dht11_data.humidity;
-            xSemaphoreGive(dht11_mutex);
+            temp = SystemStatus.temperature;
+            humi = SystemStatus.humidity;
+            xSemaphoreGive(System_mutex);
         }
         QueueSetMemberHandle_t activated_queue;
         activated_queue = xQueueSelectFromSet(queue_set, portMAX_DELAY);
@@ -200,6 +206,11 @@ void Control_task(void *pvParameters)
                         motor_msg.value = 100;
                 }
                 Motor_SetSpeed(motor_msg.value);
+                if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+                {
+                    SystemStatus.motor = motor_msg; // 更新全局状态
+                    xSemaphoreGive(System_mutex);
+                }
             }
         }
         else if (activated_queue == lightQueue)
@@ -207,6 +218,11 @@ void Control_task(void *pvParameters)
             if (xQueueReceive(lightQueue, &light_msg, 0) == pdPASS)
             {
                 LCD_Backlight_SetBrightness(light_msg.brightness);
+                if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+                {
+                    SystemStatus.light = light_msg; // 更新全局状态
+                    xSemaphoreGive(System_mutex);
+                }
             }
         }
         else if (activated_queue == servoQueue)
@@ -226,6 +242,21 @@ void Control_task(void *pvParameters)
                 }
             }
             Motor_SetSpeed2(servo_msg.value);
+            if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+            {
+                SystemStatus.servo = servo_msg; // 更新全局状态
+                xSemaphoreGive(System_mutex);
+            }
         }
+        SystemStatus_t local_status;
+        if (xSemaphoreTake(System_mutex, pdMS_TO_TICKS(10)) == pdTRUE)
+        {
+            local_status = SystemStatus;
+            xSemaphoreGive(System_mutex);
+        }
+        printf("Temperature: %d C, Humidity: %d%%\r\n", local_status.temperature, local_status.humidity);
+        printf("Motor:%d   Servo:%d\r\n", local_status.motor.mode, local_status.servo.mode);
+        printf("Motor Speed: %d%%, Servo Angle: %d%%\r\n", local_status.motor.value, local_status.servo.value);
+        printf("Light Brightness: %d%%\r\n", local_status.light.brightness);
     }
 }

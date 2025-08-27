@@ -1,7 +1,7 @@
 /*
  * @Author: jwy 2660243285@qq.com
  * @Date: 2025-08-26 21:47:45
- * @LastEditTime: 2025-08-27 15:38:51
+ * @LastEditTime: 2025-08-27 19:24:24
  * @FilePath: \mini-smart-hub\User\Global.h
  * @Description:
  */
@@ -12,15 +12,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h"
-
-typedef struct
-{
-    uint8_t temperature;
-    uint8_t humidity;
-} DHT11_Data_t;
-
-extern DHT11_Data_t dht11_data;
-extern SemaphoreHandle_t dht11_mutex;
 
 typedef enum
 {
@@ -38,6 +29,18 @@ typedef struct
 {
     uint8_t brightness; // 0~100%
 } LightMessage_t;
+
+typedef struct
+{
+    uint8_t temperature;
+    uint8_t humidity;
+    LightMessage_t light;
+    MotorMessage_t motor;
+    MotorMessage_t servo;
+} SystemStatus_t;
+
+extern SystemStatus_t SystemStatus;
+extern SemaphoreHandle_t System_mutex;
 
 extern QueueHandle_t motorQueue;
 extern QueueHandle_t servoQueue;

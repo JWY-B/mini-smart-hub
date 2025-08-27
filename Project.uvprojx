@@ -336,7 +336,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Start;.\Library;.\User;.\Hardware;.\System;.\Fonts;.\lvgl;.\lvgl\src;.\lvgl\examples\porting;.\custom;.\generated\images;.\generated\guider_fonts;.\generated\guider_customer_fonts;.\generated;.\FreeRTOS\include;.\FreeRTOS\port\RVDS\ARM_CM3</IncludePath>
+              <IncludePath>.\Start;.\Library;.\User;.\Hardware;.\System;.\Fonts;.\lvgl;.\lvgl\src;.\lvgl\examples\porting;.\custom;.\generated\images;.\generated\guider_fonts;.\generated\guider_customer_fonts;.\generated;.\FreeRTOS\include;.\FreeRTOS\port\RVDS\ARM_CM3;.\Util</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1882,6 +1882,21 @@
               <FileName>port.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\FreeRTOS\port\RVDS\ARM_CM3\port.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Util</GroupName>
+          <Files>
+            <File>
+              <FileName>GuiUtil.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Util\GuiUtil.c</FilePath>
+            </File>
+            <File>
+              <FileName>GuiUtil.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Util\GuiUtil.h</FilePath>
             </File>
           </Files>
         </Group>
