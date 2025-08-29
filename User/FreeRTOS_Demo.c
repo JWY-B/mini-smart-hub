@@ -311,7 +311,7 @@ void SendToESP32_task(void *pvParameters)
             data[5] = LocalStatus.motor.value;
             data[6] = LocalStatus.servo.mode;
             data[7] = LocalStatus.servo.value;
-            // USART3_SendArray(data, 9);
+            USART3_SendArray(data, 9);
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
